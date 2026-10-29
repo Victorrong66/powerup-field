@@ -27,7 +27,7 @@ function fixedBoard(rows, cols, minePositions, opts = {}) {
 
 test('first reveal is always safe and opens an area', () => {
   for (let s = 1; s < 50; s++) {
-    const game = new Game({ rows: 9, cols: 9, mines: 10, rng: seeded(s), powerupChance: 0 });
+    const game = new Game({ rows: 9, cols: 9, mines: 10, rng: seeded(s), dropChance: () => 0 });
     const res = game.reveal(4, 4);
     assert.equal(res.exploded, false);
     assert.equal(game.cells.filter((c) => c.mine).length, 10);
@@ -38,14 +38,14 @@ test('first reveal is always safe and opens an area', () => {
 });
 
 test('hitting a mine without a shield loses', () => {
-  const game = fixedBoard(3, 3, [[0, 0]], { powerupChance: 0 });
+  const game = fixedBoard(3, 3, [[0, 0]], { dropChance: () => 0 });
   const res = game.reveal(0, 0);
   assert.equal(res.exploded, true);
   assert.equal(game.state, 'lost');
 });
 
 test('shield absorbs a mine and is consumed', () => {
-  const game = fixedBoard(3, 3, [[0, 0]], { powerupChance: 0 });
+  const game = fixedBoard(3, 3, [[0, 0]], { dropChance: () => 0 });
   game.inventory.shield = 1;
   const res = game.reveal(0, 0);
   assert.equal(res.shieldUsed, true);
@@ -55,28 +55,49 @@ test('shield absorbs a mine and is consumed', () => {
 });
 
 test('revealing every safe tile wins', () => {
-  const game = fixedBoard(3, 3, [[0, 0]], { powerupChance: 0 });
+  const game = fixedBoard(3, 3, [[0, 0]], { dropChance: () => 0 });
   game.reveal(2, 2); // flood-fills everything except the mine
   assert.equal(game.state, 'won');
 });
 
-test('a successful reveal can award a power-up, at most one per move', () => {
-  const game = fixedBoard(4, 4, [[0, 0], [3, 3]], { powerupChance: 1 });
-  const res = game.reveal(0, 1);
-  assert.ok(res.powerup);
-  const total = Object.values(game.inventory).reduce((a, b) => a + b, 0);
-  assert.equal(total, 1);
+test('clearing an empty area drops a power-up onto a cleared blank tile', () => {
+  // A wall of mines across row 2 stops the clearing, so the game isn't won.
+  const wall = [0, 1, 2, 3, 4].map((c) => [2, c]);
+  const game = fixedBoard(5, 5, wall, { dropChance: () => 1 });
+  const res = game.reveal(0, 4); // a blank tile, so it opens an area
+  assert.equal(game.state, 'playing');
+  assert.ok(res.drop);
+  const cell = game.cells[res.drop.index];
+  assert.equal(cell.revealed, true);
+  assert.equal(cell.adjacent, 0);
+  assert.equal(cell.drop, res.drop.type);
+  // It sits on the board until picked up.
+  assert.equal(Object.values(game.inventory).reduce((a, b) => a + b, 0), 0);
+  const r = Math.floor(res.drop.index / 5);
+  const c = res.drop.index % 5;
+  assert.equal(game.collect(r, c), res.drop.type);
+  assert.equal(game.inventory[res.drop.type], 1);
+  assert.equal(cell.drop, null);
+  assert.equal(game.collect(r, c), null);
 });
 
-test('no power-up when chance is zero, or on a failed move', () => {
-  const game = fixedBoard(4, 4, [[0, 0], [3, 3]], { powerupChance: 0 });
-  assert.equal(game.reveal(0, 1).powerup, null);
-  const game2 = fixedBoard(4, 4, [[0, 0], [3, 3]], { powerupChance: 1 });
-  assert.equal(game2.reveal(0, 0).powerup, null);
+test('no drop from a single number tile, a failed move, or a losing roll', () => {
+  const number = fixedBoard(4, 4, [[0, 0], [3, 3]], { dropChance: () => 1 });
+  assert.equal(number.reveal(0, 1).drop, null); // a "1", nothing cleared
+  const boom = fixedBoard(4, 4, [[0, 0], [3, 3]], { dropChance: () => 1 });
+  assert.equal(boom.reveal(0, 0).drop, null);
+  const unlucky = fixedBoard(4, 4, [[0, 0], [3, 3]], { dropChance: () => 0 });
+  assert.equal(unlucky.reveal(0, 3).drop, null);
+});
+
+test('bigger clearings have better drop odds, capped', async () => {
+  const { defaultDropChance } = await import('../src/game.js');
+  assert.ok(defaultDropChance(30) > defaultDropChance(3));
+  assert.equal(defaultDropChance(1000), 0.6);
 });
 
 test('scanner clears the 3x3 area and flags its mines', () => {
-  const game = fixedBoard(5, 5, [[1, 1], [4, 4]], { powerupChance: 0 });
+  const game = fixedBoard(5, 5, [[1, 1], [4, 4]], { dropChance: () => 0 });
   game.inventory.scan = 1;
   const res = game.usePowerup('scan', 1, 1);
   assert.equal(res.used, true);
@@ -88,7 +109,7 @@ test('scanner clears the 3x3 area and flags its mines', () => {
 });
 
 test('defuser flags a real mine', () => {
-  const game = fixedBoard(5, 5, [[2, 3]], { powerupChance: 0 });
+  const game = fixedBoard(5, 5, [[2, 3]], { dropChance: () => 0 });
   game.inventory.defuse = 1;
   assert.equal(game.usePowerup('defuse').used, true);
   assert.equal(game.cells[game.index(2, 3)].defused, true);
@@ -96,7 +117,7 @@ test('defuser flags a real mine', () => {
 });
 
 test('time freeze pauses the clock', () => {
-  const game = fixedBoard(3, 3, [[0, 0]], { powerupChance: 0 });
+  const game = fixedBoard(3, 3, [[0, 0]], { dropChance: () => 0 });
   game.inventory.freeze = 1;
   game.usePowerup('freeze');
   for (let i = 0; i < FREEZE_SECONDS; i++) game.tick();
@@ -106,13 +127,13 @@ test('time freeze pauses the clock', () => {
 });
 
 test('cannot use a power-up you do not have', () => {
-  const game = fixedBoard(3, 3, [[0, 0]], { powerupChance: 0 });
+  const game = fixedBoard(3, 3, [[0, 0]], { dropChance: () => 0 });
   assert.equal(game.usePowerup('defuse').used, false);
   assert.equal(game.usePowerup('shield').used, false);
 });
 
 test('chord opens neighbours when flags match', () => {
-  const game = fixedBoard(3, 3, [[0, 0]], { powerupChance: 0 });
+  const game = fixedBoard(3, 3, [[0, 0]], { dropChance: () => 0 });
   game.reveal(1, 1);
   game.toggleFlag(0, 0);
   game.chord(1, 1);

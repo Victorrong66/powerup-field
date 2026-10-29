@@ -21,7 +21,10 @@
       <div class="window raised">
         <header class="titlebar">
           <h1>Power-Up Field</h1>
-          <select id="difficulty" class="raised" aria-label="Level"></select>
+          <div class="pickers">
+            <select id="size" class="raised" aria-label="Field size"></select>
+            <select id="difficulty" class="raised" aria-label="Level"></select>
+          </div>
         </header>
 
         <section class="hud sunken" aria-live="polite">
@@ -44,7 +47,7 @@
         </section>
       </div>
 
-      <p id="hint" class="hint">Tap to dig. Hold or right-click to flag. Dig safe tiles to find power-ups!</p>
+      <p id="hint" class="hint">Tap to dig. Hold or right-click to flag. Clear empty areas for a chance at power-up drops!</p>
     </main>
 
     <div id="toast" class="toast raised" role="status" hidden></div>

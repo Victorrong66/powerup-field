@@ -114,6 +114,11 @@ button.raised[aria-pressed='true'],
   letter-spacing: 0.05em;
 }
 
+.pickers {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
 .titlebar select {
   padding: 2px 4px;
   font-size: 8px;
@@ -185,6 +190,17 @@ button.raised[aria-pressed='true'],
 }
 .cell.open {
   cursor: default;
+}
+.cell.has-drop {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.cell.has-drop .sprite {
+  width: 70%;
+  height: 70%;
+  animation: bob 0.8s steps(2) infinite;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
 }
 .cell.lucky {
   animation: lucky 0.9s steps(3);
@@ -350,6 +366,10 @@ button.raised[aria-pressed='true'],
   66% { transform: translateY(-2px); }
   100% { transform: translateY(0); }
 }
+@keyframes bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8%); }
+}
 @keyframes target-blink {
   0% { filter: none; }
   100% { filter: sepia(1) saturate(3) brightness(1.1); }
@@ -364,6 +384,7 @@ button.raised[aria-pressed='true'],
 
 @media (prefers-reduced-motion: reduce) {
   .cell.lucky,
+  .cell.has-drop .sprite,
   .power.bump,
   .board.targeting .cell:not(.open) {
     animation: none;

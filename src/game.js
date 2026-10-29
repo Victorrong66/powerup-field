@@ -49,16 +49,20 @@ export const POWERUPS = {
 };
 
 export const FREEZE_SECONDS = 15;
-export const DEFAULT_POWERUP_CHANCE = 0.12;
+// Chance that clearing an empty (mine-free) area drops a power-up. Bigger
+// clearings are luckier: 20% base, +2% per tile opened, capped at 60%.
+export function defaultDropChance(clearedTiles) {
+  return Math.min(0.6, 0.2 + 0.02 * clearedTiles);
+}
 
 export class Game {
-  constructor({ rows, cols, mines, rng = Math.random, powerupChance = DEFAULT_POWERUP_CHANCE }) {
+  constructor({ rows, cols, mines, rng = Math.random, dropChance = defaultDropChance }) {
     if (mines >= rows * cols) throw new Error('Too many mines for board size');
     this.rows = rows;
     this.cols = cols;
     this.mineCount = mines;
     this.rng = rng;
-    this.powerupChance = powerupChance;
+    this.dropChance = dropChance;
     this.state = 'ready'; // ready | playing | won | lost
     this.elapsed = 0;
     this.frozenFor = 0;
@@ -71,6 +75,7 @@ export class Game {
       flagged: false,
       defused: false, // mine neutralised by a shield or scanner; shown as safe-flagged
       exploded: false,
+      drop: null, // power-up lying on this cleared tile, waiting to be picked up
     }));
   }
 
@@ -208,13 +213,26 @@ export class Game {
       result.won = true;
       return;
     }
-    // One roll per successful move (not per flood-filled tile), so big
-    // openings don't shower the player with rewards.
-    if (result.revealed.length > 0 && this.rng() < this.powerupChance) {
+    // Power-ups only drop when the move cleared an empty area (a blank tile
+    // and everything it opened), not when it uncovered a single number.
+    const blanks = result.revealed.filter((i) => this.cells[i].adjacent === 0 && !this.cells[i].drop);
+    if (blanks.length > 0 && this.rng() < this.dropChance(result.revealed.length)) {
+      const index = blanks[Math.floor(this.rng() * blanks.length)];
       const type = this.rollPowerup();
-      this.inventory[type]++;
-      result.powerup = type;
+      this.cells[index].drop = type;
+      result.drop = { index, type };
     }
+  }
+
+  // Pick up a power-up lying on a cleared tile.
+  collect(r, c) {
+    if (this.state !== 'playing' || !this.inBounds(r, c)) return null;
+    const cell = this.cells[this.index(r, c)];
+    if (!cell.revealed || !cell.drop) return null;
+    const type = cell.drop;
+    cell.drop = null;
+    this.inventory[type]++;
+    return type;
   }
 
   checkWin() {
@@ -299,6 +317,6 @@ function emptyResult() {
     exploded: false,
     shieldUsed: false,
     won: false,
-    powerup: null,
+    drop: null, // { index, type } when a power-up dropped onto the board
   };
 }

@@ -1,7 +1,10 @@
 # Power-Up Field
 
-Minesweeper with a twist: every time you successfully uncover safe tiles there's a
-random chance (12% per move) to find a **power-up**.
+Minesweeper with a twist: when you clear out an empty area (a blank tile and
+everything it opens up, with no mines), there's a random chance a **power-up**
+drops onto one of the cleared tiles. Tap it to pick it up. Bigger clearings
+have better odds (20% plus 2% per tile opened, up to 60%). Uncovering a single
+number never drops anything.
 
 | Power-up | What it does |
 | --- | --- |
@@ -61,9 +64,10 @@ test/               node:test unit tests for src/game.js
 
 - Board tiles: edit `assets/tiles-source.png` (4×3 grid: hidden, open, flag, mine, then 1–8) and run `python3 tools/slice_tiles.py`
 - Pixel-art icons: the character grids in `src/sprites.js` (one character per pixel)
-- Power-up odds: `DEFAULT_POWERUP_CHANCE` in `src/game.js`
+- Drop odds: `defaultDropChance` in `src/game.js`
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`
-- Board sizes: `DIFFICULTIES` sets each level's tile count and mine density; `fitBoard` picks rows and columns to fill the screen
+- Field sizes: `SIZES` in `src/main.js` ("Fit screen" plus N×N squares)
+- Levels: `DIFFICULTIES` sets each level's mine density (and tile count for "Fit screen", shaped by `fitBoard`)
 
 ## Turning it into an app
 

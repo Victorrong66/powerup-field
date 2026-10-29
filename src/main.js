@@ -8,6 +8,7 @@ const els = {
   board: $('board'),
   boardWrap: $('board-wrap'),
   difficulty: $('difficulty'),
+  size: $('size'),
   minesLeft: $('mines-left'),
   timer: $('timer'),
   face: $('new-game'),
@@ -21,8 +22,12 @@ const els = {
 };
 
 let game;
+// 'fit' shapes the board to the screen; a number is an N×N square board.
+const SIZES = ['fit', '8', '10', '12', '16', '20', '24'];
 let difficulty = loadSetting('difficulty', 'easy');
 if (!DIFFICULTIES[difficulty]) difficulty = 'easy';
+let size = loadSetting('size', 'fit');
+if (!SIZES.includes(size)) size = 'fit';
 let flagMode = false;
 let targeting = null; // power-up type awaiting a tile choice
 let cellEls = [];
@@ -36,6 +41,15 @@ for (const [key, d] of Object.entries(DIFFICULTIES)) {
 els.difficulty.addEventListener('change', () => {
   difficulty = els.difficulty.value;
   saveSetting('difficulty', difficulty);
+  newGame();
+});
+
+for (const key of SIZES) {
+  els.size.add(new Option(key === 'fit' ? 'Fit screen' : `${key}×${key}`, key, false, key === size));
+}
+els.size.addEventListener('change', () => {
+  size = els.size.value;
+  saveSetting('size', size);
   newGame();
 });
 
@@ -80,8 +94,15 @@ registerServiceWorker();
 // ---------- game flow ----------
 
 function newGame() {
-  const aspect = els.boardWrap.clientWidth / els.boardWrap.clientHeight;
-  game = new Game(fitBoard(DIFFICULTIES[difficulty], aspect));
+  const level = DIFFICULTIES[difficulty];
+  let board;
+  if (size === 'fit') {
+    board = fitBoard(level, els.boardWrap.clientWidth / els.boardWrap.clientHeight);
+  } else {
+    const n = Number(size);
+    board = { rows: n, cols: n, mines: Math.max(1, Math.round(n * n * level.density)) };
+  }
+  game = new Game(board);
   targeting = null;
   buildBoard();
   render();
@@ -131,7 +152,16 @@ function handleTap(i, alternate) {
 
   const cell = game.cells[i];
   const wantsFlag = flagMode !== alternate;
-  if (cell.revealed) {
+  if (cell.drop) {
+    const type = game.collect(r, c);
+    if (type) {
+      const p = POWERUPS[type];
+      vibrate([20, 30, 20]);
+      showToast(`Picked up ${p.name}! ${p.description}`);
+      flash(els.inventory.querySelector(`[data-type="${type}"]`), 'bump');
+      render();
+    }
+  } else if (cell.revealed) {
     afterMove(game.chord(r, c));
   } else if (wantsFlag) {
     if (game.toggleFlag(r, c)) vibrate(15);
@@ -147,13 +177,10 @@ function afterMove(res) {
     vibrate([40, 40, 40]);
     showToast('Your shield absorbed a mine!');
   }
-  if (res.powerup) {
-    const p = POWERUPS[res.powerup];
+  if (res.drop) {
     vibrate([20, 30, 20]);
-    showToast(`Power-up! ${p.name}: ${p.description}`);
-    const last = res.revealed[res.revealed.length - 1];
-    if (last !== undefined) flash(cellEls[last], 'lucky');
-    flash(els.inventory.querySelector(`[data-type="${res.powerup}"]`), 'bump');
+    showToast(`Clean clear! A ${POWERUPS[res.drop.type].name} dropped. Tap it to pick it up.`);
+    flash(cellEls[res.drop.index], 'lucky');
   }
   if (game.state === 'lost') {
     vibrate(200);
@@ -206,7 +233,7 @@ function showResult(won) {
   els.resultTitle.textContent = won ? 'You cleared the field!' : 'Game over';
   let body = won ? `Time: ${game.elapsed}s.` : 'Boom! You hit a mine. Grab a shield next time!';
   if (won) {
-    const key = `best-${difficulty}`;
+    const key = `best-${difficulty}-${size}`;
     const best = Number(loadSetting(key, 0));
     if (!best || game.elapsed < best) {
       saveSetting(key, game.elapsed);
@@ -232,9 +259,24 @@ function render() {
     else if (cell.flagged) tile = lost && !cell.mine ? 'wrong' : 'flag';
     el.dataset.tile = tile;
     el.classList.toggle('open', cell.revealed);
+    // Power-ups lying on the board are drawn on top of the tile.
+    const drop = game.isOver ? null : cell.drop;
+    if (el._drop !== drop) {
+      el.innerHTML = drop ? sprite(drop) : '';
+      el.classList.toggle('has-drop', Boolean(drop));
+      el._drop = drop;
+    }
     el.setAttribute(
       'aria-label',
-      cell.revealed ? (cell.mine ? 'mine' : `${cell.adjacent} adjacent mines`) : cell.flagged ? 'flagged' : 'hidden',
+      drop
+        ? `${POWERUPS[drop].name} power-up, tap to pick up`
+        : cell.revealed
+          ? cell.mine
+            ? 'mine'
+            : `${cell.adjacent} adjacent mines`
+          : cell.flagged
+            ? 'flagged'
+            : 'hidden',
     );
   });
   renderHud();
