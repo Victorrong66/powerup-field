@@ -118,3 +118,18 @@ test('chord opens neighbours when flags match', () => {
   game.chord(1, 1);
   assert.equal(game.state, 'won');
 });
+
+test('fitBoard shapes the board to the screen and keeps mine density', async () => {
+  const { fitBoard, DIFFICULTIES } = await import('../src/game.js');
+  const square = fitBoard(DIFFICULTIES.easy, 1);
+  assert.deepEqual([square.rows, square.cols], [9, 9]);
+  const tall = fitBoard(DIFFICULTIES.hard, 0.6);
+  assert.ok(tall.rows > tall.cols);
+  const wide = fitBoard(DIFFICULTIES.hard, 2);
+  assert.ok(wide.cols > wide.rows);
+  const density = wide.mines / (wide.rows * wide.cols);
+  assert.ok(Math.abs(density - DIFFICULTIES.hard.density) < 0.01);
+  // Bad measurements fall back to a square board instead of breaking.
+  assert.deepEqual(fitBoard(DIFFICULTIES.easy, NaN), square);
+  assert.deepEqual(fitBoard(DIFFICULTIES.easy, Infinity), square);
+});

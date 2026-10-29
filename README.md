@@ -63,7 +63,7 @@ test/               node:test unit tests for src/game.js
 - Pixel-art icons: the character grids in `src/sprites.js` (one character per pixel)
 - Power-up odds: `DEFAULT_POWERUP_CHANCE` in `src/game.js`
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`
-- Board sizes: `DIFFICULTIES`
+- Board sizes: `DIFFICULTIES` sets each level's tile count and mine density; `fitBoard` picks rows and columns to fill the screen
 
 ## Turning it into an app
 

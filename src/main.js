@@ -1,4 +1,4 @@
-import { DIFFICULTIES, POWERUPS, Game } from './game.js';
+import { DIFFICULTIES, POWERUPS, Game, fitBoard } from './game.js';
 import { sprite } from './sprites.js';
 
 const LONG_PRESS_MS = 420;
@@ -31,7 +31,7 @@ let toastTimer;
 // ---------- setup ----------
 
 for (const [key, d] of Object.entries(DIFFICULTIES)) {
-  els.difficulty.add(new Option(`${d.label} · ${d.cols}×${d.rows}`, key, false, key === difficulty));
+  els.difficulty.add(new Option(d.label, key, false, key === difficulty));
 }
 els.difficulty.addEventListener('change', () => {
   difficulty = els.difficulty.value;
@@ -55,7 +55,7 @@ els.playAgain.addEventListener('click', () => {
   newGame();
 });
 els.flagMode.addEventListener('click', () => setFlagMode(!flagMode));
-window.addEventListener('resize', sizeBoard);
+new ResizeObserver(sizeBoard).observe(els.boardWrap);
 window.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') setFlagMode(!flagMode);
   if (e.key === 'Escape') cancelTargeting();
@@ -80,7 +80,8 @@ registerServiceWorker();
 // ---------- game flow ----------
 
 function newGame() {
-  game = new Game(DIFFICULTIES[difficulty]);
+  const aspect = els.boardWrap.clientWidth / els.boardWrap.clientHeight;
+  game = new Game(fitBoard(DIFFICULTIES[difficulty], aspect));
   targeting = null;
   buildBoard();
   render();
@@ -102,14 +103,12 @@ function buildBoard() {
 
 function sizeBoard() {
   if (!game) return;
-  // Board frame bevel + window padding/bevel on each side.
-  const frame = 6 + 18;
-  const availW = els.boardWrap.parentElement.parentElement.clientWidth - frame;
-  // Leave room for title, HUD and controls so the whole board fits on screen.
-  const availH = window.innerHeight - 330;
-  const byW = Math.floor(availW / game.cols);
-  const byH = Math.floor(availH / game.rows);
-  const size = Math.max(20, Math.min(44, byW, Math.max(byH, 24)));
+  // The board area flexes to fill the space between scoreboard and power-ups;
+  // make the square tiles as big as that space allows (minus the bevel).
+  const frame = 6;
+  const byW = (els.boardWrap.clientWidth - frame) / game.cols;
+  const byH = (els.boardWrap.clientHeight - frame) / game.rows;
+  const size = Math.max(16, Math.floor(Math.min(byW, byH)));
   document.documentElement.style.setProperty('--cell', `${size}px`);
 }
 

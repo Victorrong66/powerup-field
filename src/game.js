@@ -1,11 +1,23 @@
 // Core game rules. No DOM access here so the logic can be tested in Node
 // and reused unchanged if the UI is ever rebuilt (e.g. native app shell).
 
+// Each level is a rough tile count and mine density; the actual rows and
+// columns are chosen per screen by fitBoard so the board fills the space.
 export const DIFFICULTIES = {
-  easy: { label: 'Easy', rows: 9, cols: 9, mines: 10 },
-  medium: { label: 'Medium', rows: 16, cols: 12, mines: 32 },
-  hard: { label: 'Hard', rows: 22, cols: 14, mines: 62 },
+  easy: { label: 'Easy', tiles: 81, density: 0.125 },
+  medium: { label: 'Medium', tiles: 192, density: 0.167 },
+  hard: { label: 'Hard', tiles: 308, density: 0.2 },
 };
+
+// Shape a board of about `tiles` squares to the available area's aspect
+// ratio (width / height), keeping the level's mine density.
+export function fitBoard({ tiles, density }, aspect) {
+  const a = Math.min(Math.max(Number.isFinite(aspect) && aspect > 0 ? aspect : 1, 0.3), 3.5);
+  const cols = Math.max(5, Math.round(Math.sqrt(tiles * a)));
+  const rows = Math.max(5, Math.round(tiles / cols));
+  const mines = Math.max(1, Math.round(rows * cols * density));
+  return { rows, cols, mines };
+}
 
 export const POWERUPS = {
   shield: {

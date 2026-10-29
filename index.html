@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#008080" />
+    <meta name="theme-color" content="#000080" />
     <meta name="description" content="Minesweeper with a twist: uncover safe tiles for a chance at power-ups." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -21,12 +21,8 @@
       <div class="window raised">
         <header class="titlebar">
           <h1>Power-Up Field</h1>
+          <select id="difficulty" class="raised" aria-label="Level"></select>
         </header>
-
-        <div class="menubar">
-          <label for="difficulty">Level</label>
-          <select id="difficulty" class="raised"></select>
-        </div>
 
         <section class="hud sunken" aria-live="polite">
           <div class="led" title="Mines left" aria-label="Mines left"><span id="mines-left">000</span></div>
