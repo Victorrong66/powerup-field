@@ -1,7 +1,8 @@
 // Cache-first service worker so the game works offline once loaded.
 // Bump CACHE when shipping changes so players get the new files.
-const CACHE = 'powerup-field-v2';
-const ASSETS = ['./', 'index.html', 'style.css', 'src/main.js', 'src/game.js', 'src/sprites.js', 'manifest.webmanifest', 'icon.svg'];
+const CACHE = 'powerup-field-v9';
+const TILES = ['hidden', 'open', 'flag', 'mine', 'exploded', 'wrong', 'defused', '1', '2', '3', '4', '5', '6', '7', '8'];
+const ASSETS = ['./', 'index.html', 'style.css', 'src/main.js', 'src/game.js', 'src/sprites.js', 'manifest.webmanifest', 'icon.svg', 'assets/fonts/press-start-2p.woff2', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png', 'assets/icons/apple-touch-icon.png', ...TILES.map((t) => `assets/tiles/${t}.png`)];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));

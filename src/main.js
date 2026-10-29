@@ -1,4 +1,4 @@
-import { DIFFICULTIES, POWERUPS, Game } from './game.js';
+import { DIFFICULTIES, POWERUPS, Game, fitBoard } from './game.js';
 import { sprite } from './sprites.js';
 
 const LONG_PRESS_MS = 420;
@@ -8,6 +8,7 @@ const els = {
   board: $('board'),
   boardWrap: $('board-wrap'),
   difficulty: $('difficulty'),
+  size: $('size'),
   minesLeft: $('mines-left'),
   timer: $('timer'),
   face: $('new-game'),
@@ -21,8 +22,12 @@ const els = {
 };
 
 let game;
+// 'fit' shapes the board to the screen; a number is an N×N square board.
+const SIZES = ['fit', '8', '10', '12', '16', '20', '24', '32'];
 let difficulty = loadSetting('difficulty', 'easy');
 if (!DIFFICULTIES[difficulty]) difficulty = 'easy';
+let size = loadSetting('size', 'fit');
+if (!SIZES.includes(size)) size = 'fit';
 let flagMode = false;
 let targeting = null; // power-up type awaiting a tile choice
 let cellEls = [];
@@ -31,11 +36,20 @@ let toastTimer;
 // ---------- setup ----------
 
 for (const [key, d] of Object.entries(DIFFICULTIES)) {
-  els.difficulty.add(new Option(`${d.label} · ${d.cols}×${d.rows}`, key, false, key === difficulty));
+  els.difficulty.add(new Option(d.label, key, false, key === difficulty));
 }
 els.difficulty.addEventListener('change', () => {
   difficulty = els.difficulty.value;
   saveSetting('difficulty', difficulty);
+  newGame();
+});
+
+for (const key of SIZES) {
+  els.size.add(new Option(key === 'fit' ? 'Fit screen' : `${key}×${key}`, key, false, key === size));
+}
+els.size.addEventListener('change', () => {
+  size = els.size.value;
+  saveSetting('size', size);
   newGame();
 });
 
@@ -55,7 +69,6 @@ els.playAgain.addEventListener('click', () => {
   newGame();
 });
 els.flagMode.addEventListener('click', () => setFlagMode(!flagMode));
-window.addEventListener('resize', sizeBoard);
 window.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') setFlagMode(!flagMode);
   if (e.key === 'Escape') cancelTargeting();
@@ -80,7 +93,22 @@ registerServiceWorker();
 // ---------- game flow ----------
 
 function newGame() {
-  game = new Game(DIFFICULTIES[difficulty]);
+  const level = DIFFICULTIES[difficulty];
+  let board;
+  if (size === 'fit') {
+    const w = els.boardWrap.clientWidth;
+    const h = els.boardWrap.clientHeight - 6; // board's top and bottom bevel
+    board = fitBoard(level, w / h);
+    // Tiles span the full width, so add or drop rows to fill the height exactly.
+    if (w > 0 && h > 0) {
+      board.rows = Math.max(5, Math.floor(h / (w / board.cols)));
+      board.mines = Math.max(1, Math.round(board.rows * board.cols * level.density));
+    }
+  } else {
+    const n = Number(size);
+    board = { rows: n, cols: n, mines: Math.max(1, Math.round(n * n * level.density)) };
+  }
+  game = new Game(board);
   targeting = null;
   buildBoard();
   render();
@@ -97,20 +125,6 @@ function buildBoard() {
     els.board.append(b);
     return b;
   });
-  sizeBoard();
-}
-
-function sizeBoard() {
-  if (!game) return;
-  // Board frame bevel + window padding/bevel on each side.
-  const frame = 6 + 18;
-  const availW = els.boardWrap.parentElement.parentElement.clientWidth - frame;
-  // Leave room for title, HUD and controls so the whole board fits on screen.
-  const availH = window.innerHeight - 330;
-  const byW = Math.floor(availW / game.cols);
-  const byH = Math.floor(availH / game.rows);
-  const size = Math.max(20, Math.min(44, byW, Math.max(byH, 24)));
-  document.documentElement.style.setProperty('--cell', `${size}px`);
 }
 
 function handleTap(i, alternate) {
@@ -131,8 +145,18 @@ function handleTap(i, alternate) {
   }
 
   const cell = game.cells[i];
-  const wantsFlag = flagMode !== alternate;
-  if (cell.revealed) {
+  // Long-press / right-click always flags, so it can never set off a mine.
+  const wantsFlag = flagMode || alternate;
+  if (cell.drop) {
+    const type = game.collect(r, c);
+    if (type) {
+      const p = POWERUPS[type];
+      vibrate([20, 30, 20]);
+      showToast(`Picked up ${p.name}! ${p.description}`);
+      flash(els.inventory.querySelector(`[data-type="${type}"]`), 'bump');
+      render();
+    }
+  } else if (cell.revealed) {
     afterMove(game.chord(r, c));
   } else if (wantsFlag) {
     if (game.toggleFlag(r, c)) vibrate(15);
@@ -148,13 +172,10 @@ function afterMove(res) {
     vibrate([40, 40, 40]);
     showToast('Your shield absorbed a mine!');
   }
-  if (res.powerup) {
-    const p = POWERUPS[res.powerup];
+  if (res.drop) {
     vibrate([20, 30, 20]);
-    showToast(`Power-up! ${p.name}: ${p.description}`);
-    const last = res.revealed[res.revealed.length - 1];
-    if (last !== undefined) flash(cellEls[last], 'lucky');
-    flash(els.inventory.querySelector(`[data-type="${res.powerup}"]`), 'bump');
+    showToast(`Clean clear! A ${POWERUPS[res.drop.type].name} dropped. Tap it to pick it up.`);
+    flash(cellEls[res.drop.index], 'lucky');
   }
   if (game.state === 'lost') {
     vibrate(200);
@@ -207,7 +228,7 @@ function showResult(won) {
   els.resultTitle.textContent = won ? 'You cleared the field!' : 'Game over';
   let body = won ? `Time: ${game.elapsed}s.` : 'Boom! You hit a mine. Grab a shield next time!';
   if (won) {
-    const key = `best-${difficulty}`;
+    const key = `best-${difficulty}-${size}`;
     const best = Number(loadSetting(key, 0));
     if (!best || game.elapsed < best) {
       saveSetting(key, game.elapsed);
@@ -226,36 +247,31 @@ function render() {
   const lost = game.state === 'lost';
   game.cells.forEach((cell, i) => {
     const el = cellEls[i];
-    let cls = 'cell';
-    let text = '';
-    if (cell.defused) {
-      cls += ' defused';
-      text = sprite('flag');
-    } else if (cell.revealed && cell.mine) {
-      cls += ' open' + (cell.exploded ? ' exploded' : '');
-      text = sprite('mine');
-    } else if (cell.revealed) {
-      cls += ' open';
-      if (cell.adjacent) {
-        cls += ` n${cell.adjacent}`;
-        text = String(cell.adjacent);
-      }
-    } else if (cell.flagged) {
-      if (lost && !cell.mine) {
-        cls += ' wrong open';
-        text = sprite('wrong');
-      } else {
-        text = sprite('flag');
-      }
-    }
-    el.className = cls;
-    if (el._html !== text) {
-      el.innerHTML = text;
-      el._html = text;
+    let tile = 'hidden';
+    if (cell.defused) tile = 'defused';
+    else if (cell.revealed && cell.mine) tile = cell.exploded ? 'exploded' : 'mine';
+    else if (cell.revealed) tile = cell.adjacent ? String(cell.adjacent) : 'open';
+    else if (cell.flagged) tile = lost && !cell.mine ? 'wrong' : 'flag';
+    el.dataset.tile = tile;
+    el.classList.toggle('open', cell.revealed);
+    // Power-ups lying on the board are drawn on top of the tile.
+    const drop = game.isOver ? null : cell.drop;
+    if (el._drop !== drop) {
+      el.innerHTML = drop ? sprite(drop) : '';
+      el.classList.toggle('has-drop', Boolean(drop));
+      el._drop = drop;
     }
     el.setAttribute(
       'aria-label',
-      cell.revealed ? (cell.mine ? 'mine' : `${cell.adjacent} adjacent mines`) : cell.flagged ? 'flagged' : 'hidden',
+      drop
+        ? `${POWERUPS[drop].name} power-up, tap to pick up`
+        : cell.revealed
+          ? cell.mine
+            ? 'mine'
+            : `${cell.adjacent} adjacent mines`
+          : cell.flagged
+            ? 'flagged'
+            : 'hidden',
     );
   });
   renderHud();
@@ -311,7 +327,7 @@ function showToast(msg) {
 // ---------- input ----------
 
 // Tap = primary action, long-press (touch) or right-click (mouse) = the
-// alternate action. With flag mode on, the two are swapped.
+// alternate action (always flag). Flag mode only changes what a tap does.
 function attachBoardInput() {
   let pressTimer = null;
   let pressed = null; // { i, x, y, fired }

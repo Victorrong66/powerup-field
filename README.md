@@ -1,7 +1,10 @@
 # Power-Up Field
 
-Minesweeper with a twist: every time you successfully uncover safe tiles there's a
-random chance (12% per move) to find a **power-up**.
+Minesweeper with a twist: when you clear out an empty area (a blank tile and
+everything it opens up, with no mines), there's a random chance a **power-up**
+drops onto one of the cleared tiles. Tap it to pick it up. Bigger clearings
+have better odds (20% plus 2% per tile opened, up to 60%). Uncovering a single
+number never drops anything.
 
 | Power-up | What it does |
 | --- | --- |
@@ -14,7 +17,7 @@ random chance (12% per move) to find a **power-up**.
 
 - **Tap / click**: dig a tile
 - **Long-press / right-click**: flag a tile
-- **⛏️/🚩 button** (or `F` key): switch between dig and flag mode (long-press then does the opposite)
+- **Dig/Flag button** (or `F` key): switch what a tap does. Long-press always flags, in either mode
 - **Tap a number** whose flags are all placed: opens the remaining neighbours (chording)
 - The first tap is always safe.
 
@@ -49,17 +52,35 @@ index.html          page shell
 style.css           styles (mobile-first, safe-area aware)
 src/game.js         game rules, no DOM: board, mines, power-ups, timer
 src/main.js         UI: rendering, touch/mouse input, toasts, best times
+src/sprites.js      pixel-art icons (faces, power-ups) as character grids
+assets/tiles/       board tile images, cut from assets/tiles-source.png
+tools/slice_tiles.py  re-cuts the tiles after editing the sheet (needs Pillow)
 sw.js               offline cache (bump CACHE when releasing)
 manifest.webmanifest, icon.svg   PWA metadata
+assets/icons/       home-screen icons, built by tools/make_icons.py
+assets/fonts/       Press Start 2P pixel font (SIL Open Font License)
 test/               node:test unit tests for src/game.js
 ```
 
 ## Tuning
 
-- Pixel-art sprites: the character grids in `src/sprites.js` (one character per pixel)
-- Power-up odds: `DEFAULT_POWERUP_CHANCE` in `src/game.js`
+- Board tiles: edit `assets/tiles-source.png` (4×3 grid: hidden, spare hidden, flag, mine, then 1–8; the blank dug tile is generated) and run `python3 tools/slice_tiles.py`
+- Pixel-art icons: the character grids in `src/sprites.js` (one character per pixel)
+- Drop odds: `defaultDropChance` in `src/game.js`
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`
-- Board sizes: `DIFFICULTIES`
+- Field sizes: `SIZES` in `src/main.js` ("Fit screen" plus N×N squares)
+- Levels: `DIFFICULTIES` sets each level's mine density (and tile count for "Fit screen", shaped by `fitBoard`)
+
+## Put it on your iPhone (free)
+
+1. Host the folder on any HTTPS static host. On **Cloudflare Pages**: Workers & Pages,
+   Create, Pages, connect this GitHub repo, framework preset **None**, leave the
+   build command empty, and set the build output directory to `/`.
+2. Open the site in **Safari** on the iPhone, tap **Share**, then **Add to Home Screen**.
+
+It runs full-screen with its own icon and works offline after the first visit
+(the font, tiles and icons are all bundled). Every push to the production branch
+redeploys; reopen the app twice to pick up an update.
 
 ## Turning it into an app
 

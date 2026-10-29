@@ -1,7 +1,14 @@
-/* Classic desktop-minesweeper look: teal desktop, grey bevelled window,
+/* Classic minesweeper look filling the whole screen: grey bevelled panels,
    red LED counters, pixel font and pixel-art sprites. */
+/* Pixel font bundled with the app (SIL Open Font License, assets/fonts/OFL.txt)
+   so it works offline. */
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('assets/fonts/press-start-2p.woff2') format('woff2');
+  font-display: swap;
+}
+
 :root {
-  --desk: #008080;
   --grey: #c0c0c0;
   --light: #ffffff;
   --shadow: #808080;
@@ -17,7 +24,6 @@
   --accent: #ffff00;
   --pixel: 'Press Start 2P', 'Courier New', ui-monospace, monospace;
   --bevel: 3px;
-  --cell: 32px;
   color-scheme: light;
 }
 
@@ -29,7 +35,7 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--desk);
+  background: var(--grey);
   color: var(--dark);
   font-family: var(--pixel);
   font-size: 10px;
@@ -75,32 +81,34 @@ button.raised[aria-pressed='true'],
 }
 
 /* Layout */
+/* One full-screen column: title, level, scoreboard, board (takes all the
+   space left over), power-ups, hint. */
 .app {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  min-height: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  padding-block: 12px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  height: 100%;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .window {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 3px 6px 8px;
-  max-width: 100%;
-  box-shadow: 1px 1px 0 var(--dark);
+  padding: 0 8px 8px;
+}
+.window.raised {
+  border: none;
 }
 
 .titlebar {
   display: flex;
   align-items: center;
-  margin: 0 -3px;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 -8px;
   padding: 4px 6px;
   background: var(--title);
   color: var(--title-text);
@@ -113,13 +121,14 @@ button.raised[aria-pressed='true'],
   letter-spacing: 0.05em;
 }
 
-.menubar {
+.pickers {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 4px;
+  flex: 0 0 auto;
 }
-.menubar select {
-  padding: 4px 6px;
+.titlebar select {
+  padding: 2px 4px;
+  font-size: 8px;
   cursor: pointer;
 }
 
@@ -155,74 +164,100 @@ button.raised[aria-pressed='true'],
 }
 
 /* Board */
+/* The board runs edge to edge (out past the window padding). Tiles are
+   the screen width divided by the column count, so smaller grids get bigger
+   tiles. A board taller than the space scrolls; one that fits is centred. */
 .board-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  margin: 0 -8px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .board {
+  flex: none;
+  width: 100%;
+  margin-block: auto;
   display: grid;
-  grid-template-columns: repeat(var(--cols), var(--cell));
+  background: var(--grey);
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+.board.sunken {
+  border-left: none;
+  border-right: none;
 }
 .board.targeting .cell:not(.open) {
   animation: target-blink 0.8s steps(2) infinite;
 }
 
 .cell {
-  width: var(--cell);
-  height: var(--cell);
-  padding: calc(var(--cell) * 0.12);
-  background: var(--grey);
-  border: max(2px, calc(var(--cell) * 0.1)) solid;
-  border-color: var(--light) var(--shadow) var(--shadow) var(--light);
-  font-family: var(--pixel);
-  font-size: calc(var(--cell) * 0.5);
-  line-height: 1;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-.cell .sprite {
   width: 100%;
-  height: 100%;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background: transparent center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  cursor: pointer;
 }
 .cell.open {
-  border-width: 1px 0 0 1px;
-  border-color: var(--shadow);
   cursor: default;
-  padding: calc(var(--cell) * 0.16);
 }
-.cell.exploded {
-  background: var(--boom);
+.cell.has-drop {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
-.cell.defused {
-  background: var(--defused);
-}
-.cell.wrong {
-  background: var(--wrong);
+.cell.has-drop .sprite {
+  width: 70%;
+  height: 70%;
+  animation: bob 0.8s steps(2) infinite;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
 }
 .cell.lucky {
   animation: lucky 0.9s steps(3);
 }
 
-.n1 { color: #0000ff; }
-.n2 { color: #007b00; }
-.n3 { color: #ff0000; }
-.n4 { color: #00007b; }
-.n5 { color: #7b0000; }
-.n6 { color: #007b7b; }
-.n7 { color: #000000; }
-.n8 { color: #7b7b7b; }
+/* Tile art cut from assets/tiles-source.png by tools/slice_tiles.py */
+.cell[data-tile='hidden'] { background-image: url('assets/tiles/hidden.png'); }
+.cell[data-tile='open'] { background-image: url('assets/tiles/open.png'); }
+.cell[data-tile='flag'] { background-image: url('assets/tiles/flag.png'); }
+.cell[data-tile='mine'] { background-image: url('assets/tiles/mine.png'); }
+.cell[data-tile='exploded'] { background-image: url('assets/tiles/exploded.png'); }
+.cell[data-tile='wrong'] { background-image: url('assets/tiles/wrong.png'); }
+.cell[data-tile='defused'] { background-image: url('assets/tiles/defused.png'); }
+.cell[data-tile='1'] { background-image: url('assets/tiles/1.png'); }
+.cell[data-tile='2'] { background-image: url('assets/tiles/2.png'); }
+.cell[data-tile='3'] { background-image: url('assets/tiles/3.png'); }
+.cell[data-tile='4'] { background-image: url('assets/tiles/4.png'); }
+.cell[data-tile='5'] { background-image: url('assets/tiles/5.png'); }
+.cell[data-tile='6'] { background-image: url('assets/tiles/6.png'); }
+.cell[data-tile='7'] { background-image: url('assets/tiles/7.png'); }
+.cell[data-tile='8'] { background-image: url('assets/tiles/8.png'); }
+
+/* Loads every tile up front so the first reveal of each kind doesn't flicker. */
+.tile-preload {
+  position: absolute;
+  width: 0;
+  height: 0;
+  background-image: url('assets/tiles/hidden.png'), url('assets/tiles/open.png'), url('assets/tiles/flag.png'), url('assets/tiles/mine.png'), url('assets/tiles/exploded.png'), url('assets/tiles/wrong.png'), url('assets/tiles/defused.png'), url('assets/tiles/1.png'), url('assets/tiles/2.png'), url('assets/tiles/3.png'), url('assets/tiles/4.png'), url('assets/tiles/5.png'), url('assets/tiles/6.png'), url('assets/tiles/7.png'), url('assets/tiles/8.png');
+}
 
 /* Controls */
 .controls {
   display: flex;
   gap: 6px;
   align-items: stretch;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .mode,
@@ -289,12 +324,11 @@ button.raised[aria-pressed='true'],
 
 .hint {
   margin: 0;
-  max-width: 44ch;
-  color: var(--light);
+  padding: 0 8px 8px;
+  color: var(--shadow);
   font-size: 8px;
   line-height: 1.8;
   text-align: center;
-  text-shadow: 1px 1px 0 var(--dark);
 }
 
 /* Messages */
@@ -342,8 +376,8 @@ button.raised[aria-pressed='true'],
 }
 
 @keyframes lucky {
-  0%, 66% { background: var(--accent); }
-  100% { background: var(--grey); }
+  0%, 66% { filter: sepia(1) saturate(5) brightness(1.15); }
+  100% { filter: none; }
 }
 @keyframes bump {
   0% { transform: translateY(0); }
@@ -351,13 +385,25 @@ button.raised[aria-pressed='true'],
   66% { transform: translateY(-2px); }
   100% { transform: translateY(0); }
 }
+@keyframes bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8%); }
+}
 @keyframes target-blink {
-  0% { background: var(--grey); }
-  100% { background: #e0e070; }
+  0% { filter: none; }
+  100% { filter: sepia(1) saturate(3) brightness(1.1); }
+}
+
+/* Short screens (phones held sideways): give the board the hint's space. */
+@media (max-height: 560px) {
+  .hint {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cell.lucky,
+  .cell.has-drop .sprite,
   .power.bump,
   .board.targeting .cell:not(.open) {
     animation: none;

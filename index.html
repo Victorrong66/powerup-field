@@ -3,17 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#008080" />
+    <meta name="theme-color" content="#000080" />
     <meta name="description" content="Minesweeper with a twist: uncover safe tiles for a chance at power-ups." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Power-Up Field</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+    <link rel="preload" href="assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -21,12 +19,11 @@
       <div class="window raised">
         <header class="titlebar">
           <h1>Power-Up Field</h1>
+          <div class="pickers">
+            <select id="size" class="raised" aria-label="Field size"></select>
+            <select id="difficulty" class="raised" aria-label="Level"></select>
+          </div>
         </header>
-
-        <div class="menubar">
-          <label for="difficulty">Level</label>
-          <select id="difficulty" class="raised"></select>
-        </div>
 
         <section class="hud sunken" aria-live="polite">
           <div class="led" title="Mines left" aria-label="Mines left"><span id="mines-left">000</span></div>
@@ -36,6 +33,7 @@
 
         <div id="board-wrap" class="board-wrap">
           <div id="board" class="board sunken" role="grid" aria-label="Minefield"></div>
+          <div class="tile-preload" aria-hidden="true"></div>
         </div>
 
         <section class="controls">
@@ -47,7 +45,7 @@
         </section>
       </div>
 
-      <p id="hint" class="hint">Tap to dig. Hold or right-click to flag. Dig safe tiles to find power-ups!</p>
+      <p id="hint" class="hint">Tap to dig. Hold or right-click to flag. Clear empty areas for a chance at power-up drops!</p>
     </main>
 
     <div id="toast" class="toast raised" role="status" hidden></div>
