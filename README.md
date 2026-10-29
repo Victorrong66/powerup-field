@@ -67,6 +67,7 @@ test/               node:test unit tests for src/game.js
 ## Tuning
 
 - Board tiles: edit `assets/tiles-source.png` (4×3 grid: hidden, spare hidden, flag, mine, then 1–8; the blank dug tile is generated) and run `python3 tools/slice_tiles.py`
+- Flag animation: edit `assets/flag-anim-source.png` (8 frames, two rows of four) and run `python3 tools/slice_flag_anim.py` after `slice_tiles.py`; the last frame is also the resting flag tile
 - Pixel-art icons: the character grids in `src/sprites.js` (one character per pixel)
 - Drop odds: `defaultDropChance` in `src/game.js`
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`

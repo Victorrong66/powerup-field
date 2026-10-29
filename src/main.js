@@ -93,6 +93,7 @@ registerServiceWorker();
 // ---------- game flow ----------
 
 function newGame() {
+  document.querySelectorAll('.flag-drop').forEach((el) => el.remove());
   const level = DIFFICULTIES[difficulty];
   let board;
   if (size === 'fit') {
@@ -159,7 +160,10 @@ function handleTap(i, alternate) {
   } else if (cell.revealed) {
     afterMove(game.chord(r, c));
   } else if (wantsFlag) {
-    if (game.toggleFlag(r, c)) vibrate(15);
+    if (game.toggleFlag(r, c)) {
+      vibrate(15);
+      if (game.cells[i].flagged) playFlagDrop(i);
+    }
     render();
   } else {
     afterMove(game.reveal(r, c));
@@ -304,6 +308,44 @@ function renderInventory() {
     btn.disabled = n === 0;
     btn.classList.toggle('active', targeting === type);
   }
+}
+
+// Flag-placing animation: frames from assets/tiles/flag-anim.png, each a tile
+// plus headroom above it (the flag drops in from above). It plays in a layer
+// over the board so the flag isn't clipped at the board's top edge, while the
+// cell itself is hidden; the last frame matches the resting flag tile.
+const FLAG_FRAMES = 8;
+const FLAG_FRAME_MS = 55;
+const FLAG_FRAME_HEIGHT = 139 / 96; // frame height as a multiple of its width
+
+function playFlagDrop(i) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cell = cellEls[i];
+  const rect = cell.getBoundingClientRect();
+  const height = rect.width * FLAG_FRAME_HEIGHT;
+  const layer = document.createElement('div');
+  layer.className = 'flag-drop';
+  Object.assign(layer.style, {
+    left: `${rect.left}px`,
+    top: `${rect.bottom - height}px`,
+    width: `${rect.width}px`,
+    height: `${height}px`,
+  });
+  document.body.append(layer);
+  cell.classList.add('flag-dropping');
+  let frame = 0;
+  const step = () => {
+    layer.style.backgroundPositionX = `${(frame / (FLAG_FRAMES - 1)) * 100}%`;
+    if (++frame < FLAG_FRAMES) {
+      setTimeout(step, FLAG_FRAME_MS);
+    } else {
+      setTimeout(() => {
+        layer.remove();
+        cell.classList.remove('flag-dropping');
+      }, FLAG_FRAME_MS);
+    }
+  };
+  step();
 }
 
 function flash(el, cls) {

@@ -242,12 +242,25 @@ button.raised[aria-pressed='true'],
 .cell[data-tile='7'] { background-image: url('assets/tiles/7.png'); }
 .cell[data-tile='8'] { background-image: url('assets/tiles/8.png'); }
 
+/* Flag-placing animation layer (see playFlagDrop in src/main.js). */
+.flag-drop {
+  position: fixed;
+  z-index: 5;
+  pointer-events: none;
+  background: url('assets/tiles/flag-anim.png') 0 0 / 800% 100% no-repeat;
+  image-rendering: pixelated;
+}
+.cell.flag-dropping {
+  visibility: hidden;
+}
+
 /* Loads every tile up front so the first reveal of each kind doesn't flicker. */
 .tile-preload {
   position: absolute;
   width: 0;
   height: 0;
-  background-image: url('assets/tiles/hidden.png'), url('assets/tiles/open.png'), url('assets/tiles/flag.png'), url('assets/tiles/mine.png'), url('assets/tiles/exploded.png'), url('assets/tiles/wrong.png'), url('assets/tiles/defused.png'), url('assets/tiles/1.png'), url('assets/tiles/2.png'), url('assets/tiles/3.png'), url('assets/tiles/4.png'), url('assets/tiles/5.png'), url('assets/tiles/6.png'), url('assets/tiles/7.png'), url('assets/tiles/8.png');
+  background-image: url('assets/tiles/hidden.png'), url('assets/tiles/open.png'), url('assets/tiles/flag.png'), url('assets/tiles/mine.png'), url('assets/tiles/exploded.png'), url('assets/tiles/wrong.png'), url('assets/tiles/defused.png'), url('assets/tiles/1.png'), url('assets/tiles/2.png'), url('assets/tiles/3.png'), url('assets/tiles/4.png'), url('assets/tiles/5.png'), url('assets/tiles/6.png'), url('assets/tiles/7.png'), url('assets/tiles/8.png'),
+    url('assets/tiles/flag-anim.png');
 }
 
 /* Controls */

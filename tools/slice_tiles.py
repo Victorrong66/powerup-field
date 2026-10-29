@@ -104,15 +104,18 @@ def clear_dark_corners(tile):
     return tile
 
 
-def tint_greys(tile, rgb):
-    """Recolour the light-grey face of a tile, keeping its shading."""
+def tint_greys(tile, rgb, dark=False):
+    """Recolour the grey face of a tile, keeping its shading. By default only
+    light greys change; dark=True also recolours dark (slate) greys."""
     tile = tile.copy()
     px = tile.load()
     for y in range(tile.height):
         for x in range(tile.width):
             r, g, b, a = px[x, y]
-            if a and min(r, g, b) > 140 and max(r, g, b) - min(r, g, b) < 24:
+            if a and (dark or min(r, g, b) > 140) and max(r, g, b) - min(r, g, b) < (40 if dark else 24):
                 k = (r + g + b) / 3 / 255
+                if dark:
+                    k = min(1, k * 1.6)  # lift slate so the colour shows
                 px[x, y] = (int(rgb[0] * k), int(rgb[1] * k), int(rgb[2] * k), a)
     return tile
 
