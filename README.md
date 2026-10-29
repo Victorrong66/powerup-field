@@ -56,6 +56,7 @@ test/               node:test unit tests for src/game.js
 
 ## Tuning
 
+- Pixel-art sprites: the character grids in `src/sprites.js` (one character per pixel)
 - Power-up odds: `DEFAULT_POWERUP_CHANCE` in `src/game.js`
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`
 - Board sizes: `DIFFICULTIES`

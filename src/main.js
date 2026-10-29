@@ -1,4 +1,5 @@
 import { DIFFICULTIES, POWERUPS, Game } from './game.js';
+import { sprite } from './sprites.js';
 
 const LONG_PRESS_MS = 420;
 const $ = (id) => document.getElementById(id);
@@ -9,7 +10,6 @@ const els = {
   difficulty: $('difficulty'),
   minesLeft: $('mines-left'),
   timer: $('timer'),
-  timerIcon: $('timer-icon'),
   face: $('new-game'),
   flagMode: $('flag-mode'),
   inventory: $('inventory'),
@@ -41,10 +41,10 @@ els.difficulty.addEventListener('change', () => {
 
 for (const [type, p] of Object.entries(POWERUPS)) {
   const btn = document.createElement('button');
-  btn.className = 'power';
+  btn.className = 'power raised';
   btn.dataset.type = type;
   btn.title = `${p.name}: ${p.description}`;
-  btn.innerHTML = `<span class="icon" aria-hidden="true">${p.icon}</span><span class="name">${p.name}</span><span class="count">0</span>`;
+  btn.innerHTML = `<span class="icon">${sprite(type)}</span><span class="name">${p.name}</span><span class="count">0</span>`;
   btn.addEventListener('click', () => onPowerupClick(type));
   els.inventory.append(btn);
 }
@@ -68,6 +68,7 @@ setInterval(() => {
 }, 1000);
 
 attachBoardInput();
+setFlagMode(false);
 newGame();
 // Dev helper: open with ?debug to poke at state from the console,
 // e.g. `pwf.game.inventory.scan = 3; pwf.render()`.
@@ -101,13 +102,13 @@ function buildBoard() {
 
 function sizeBoard() {
   if (!game) return;
-  const gap = 2;
-  const pad = 8;
-  const availW = els.boardWrap.clientWidth - pad;
-  // Leave room for header, HUD and controls so the whole board fits on screen.
-  const availH = window.innerHeight - 260;
-  const byW = Math.floor((availW - gap * (game.cols - 1)) / game.cols);
-  const byH = Math.floor((availH - gap * (game.rows - 1)) / game.rows);
+  // Board frame bevel + window padding/bevel on each side.
+  const frame = 6 + 18;
+  const availW = els.boardWrap.parentElement.parentElement.clientWidth - frame;
+  // Leave room for title, HUD and controls so the whole board fits on screen.
+  const availH = window.innerHeight - 330;
+  const byW = Math.floor(availW / game.cols);
+  const byH = Math.floor(availH / game.rows);
   const size = Math.max(20, Math.min(44, byW, Math.max(byH, 24)));
   document.documentElement.style.setProperty('--cell', `${size}px`);
 }
@@ -124,7 +125,7 @@ function handleTap(i, alternate) {
     if (res.used) {
       vibrate(30);
       afterMove(res);
-      showToast(`${POWERUPS[type].icon} ${POWERUPS[type].name} used!`);
+      showToast(`${POWERUPS[type].name} used!`);
     }
     return;
   }
@@ -142,15 +143,15 @@ function handleTap(i, alternate) {
 }
 
 function afterMove(res) {
-  render(res);
+  render();
   if (res.shieldUsed) {
     vibrate([40, 40, 40]);
-    showToast('🛡️ Your shield absorbed a mine!');
+    showToast('Your shield absorbed a mine!');
   }
   if (res.powerup) {
     const p = POWERUPS[res.powerup];
     vibrate([20, 30, 20]);
-    showToast(`${p.icon} Power-up found: ${p.name}! ${p.description}`);
+    showToast(`Power-up! ${p.name}: ${p.description}`);
     const last = res.revealed[res.revealed.length - 1];
     if (last !== undefined) flash(cellEls[last], 'lucky');
     flash(els.inventory.querySelector(`[data-type="${res.powerup}"]`), 'bump');
@@ -170,21 +171,21 @@ function onPowerupClick(type) {
   }
   const p = POWERUPS[type];
   if (p.passive) {
-    showToast(`${p.icon} ${p.name} is automatic — it saves you from your next mine.`);
+    showToast(`${p.name} is automatic. It saves you from your next mine.`);
     return;
   }
   if (p.targeted) {
     if (targeting === type) return cancelTargeting();
     targeting = type;
     els.board.classList.add('targeting');
-    showToast(`${p.icon} Tap a tile to use ${p.name}. Tap the button again to cancel.`);
+    showToast(`Tap a tile to use ${p.name}. Tap the button again to cancel.`);
     renderInventory();
     return;
   }
   const res = game.usePowerup(type);
   if (res.used) {
     vibrate(30);
-    showToast(`${p.icon} ${p.name} used!`);
+    showToast(`${p.name} used!`);
     afterMove(res);
   }
 }
@@ -198,13 +199,13 @@ function cancelTargeting() {
 function setFlagMode(on) {
   flagMode = on;
   els.flagMode.setAttribute('aria-pressed', String(on));
-  els.flagMode.querySelector('.mode-icon').textContent = on ? '🚩' : '⛏️';
+  els.flagMode.querySelector('.mode-icon').innerHTML = sprite(on ? 'flag' : 'dig');
   els.flagMode.querySelector('.mode-label').textContent = on ? 'Flag' : 'Dig';
 }
 
 function showResult(won) {
-  els.resultTitle.textContent = won ? '🎉 You cleared the field!' : '💥 Boom!';
-  let body = won ? `Time: ${game.elapsed}s.` : 'You hit a mine. Grab a shield next time!';
+  els.resultTitle.textContent = won ? 'You cleared the field!' : 'Game over';
+  let body = won ? `Time: ${game.elapsed}s.` : 'Boom! You hit a mine. Grab a shield next time!';
   if (won) {
     const key = `best-${difficulty}`;
     const best = Number(loadSetting(key, 0));
@@ -221,8 +222,7 @@ function showResult(won) {
 
 // ---------- rendering ----------
 
-function render(res) {
-  const fresh = new Set(res ? res.revealed : []);
+function render() {
   const lost = game.state === 'lost';
   game.cells.forEach((cell, i) => {
     const el = cellEls[i];
@@ -230,10 +230,10 @@ function render(res) {
     let text = '';
     if (cell.defused) {
       cls += ' defused';
-      text = '🚩';
+      text = sprite('flag');
     } else if (cell.revealed && cell.mine) {
       cls += ' open' + (cell.exploded ? ' exploded' : '');
-      text = '💣';
+      text = sprite('mine');
     } else if (cell.revealed) {
       cls += ' open';
       if (cell.adjacent) {
@@ -242,15 +242,17 @@ function render(res) {
       }
     } else if (cell.flagged) {
       if (lost && !cell.mine) {
-        cls += ' wrong';
-        text = '❌';
+        cls += ' wrong open';
+        text = sprite('wrong');
       } else {
-        text = '🚩';
+        text = sprite('flag');
       }
     }
-    if (fresh.has(i)) cls += ' pop';
     el.className = cls;
-    el.textContent = text;
+    if (el._html !== text) {
+      el.innerHTML = text;
+      el._html = text;
+    }
     el.setAttribute(
       'aria-label',
       cell.revealed ? (cell.mine ? 'mine' : `${cell.adjacent} adjacent mines`) : cell.flagged ? 'flagged' : 'hidden',
@@ -261,12 +263,20 @@ function render(res) {
 }
 
 function renderHud() {
-  els.minesLeft.textContent = game.minesLeft;
-  els.timer.textContent = game.elapsed;
-  const frozen = game.frozenFor > 0;
-  els.timer.parentElement.classList.toggle('frozen', frozen);
-  els.timerIcon.textContent = frozen ? '❄️' : '⏱️';
-  els.face.textContent = game.state === 'lost' ? '😵' : game.state === 'won' ? '😎' : '🙂';
+  els.minesLeft.textContent = led(game.minesLeft);
+  els.timer.textContent = led(game.elapsed);
+  els.timer.parentElement.classList.toggle('frozen', game.frozenFor > 0);
+  const face = game.state === 'lost' ? 'dead' : game.state === 'won' ? 'cool' : 'smile';
+  if (els.face.dataset.face !== face) {
+    els.face.innerHTML = sprite(face);
+    els.face.dataset.face = face;
+  }
+}
+
+// Three-digit counter like the classic scoreboard (negative when over-flagged).
+function led(n) {
+  const clamped = Math.max(-99, Math.min(999, n));
+  return clamped < 0 ? '-' + String(-clamped).padStart(2, '0') : String(clamped).padStart(3, '0');
 }
 
 function renderInventory() {

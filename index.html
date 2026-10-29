@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#008080" />
     <meta name="description" content="Minesweeper with a twist: uncover safe tiles for a chance at power-ups." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,42 +11,53 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <main class="app">
-      <header class="top">
-        <h1>Power-Up Field</h1>
-        <select id="difficulty" aria-label="Difficulty"></select>
-      </header>
+      <div class="window raised">
+        <header class="titlebar">
+          <h1>Power-Up Field</h1>
+        </header>
 
-      <section class="hud" aria-live="polite">
-        <div class="stat" title="Mines left"><span aria-hidden="true">💣</span> <b id="mines-left">0</b></div>
-        <button id="new-game" class="face" aria-label="New game">🙂</button>
-        <div class="stat" title="Time"><span id="timer-icon" aria-hidden="true">⏱️</span> <b id="timer">0</b></div>
-      </section>
+        <div class="menubar">
+          <label for="difficulty">Level</label>
+          <select id="difficulty" class="raised"></select>
+        </div>
 
-      <div id="board-wrap" class="board-wrap">
-        <div id="board" class="board" role="grid" aria-label="Minefield"></div>
+        <section class="hud sunken" aria-live="polite">
+          <div class="led" title="Mines left" aria-label="Mines left"><span id="mines-left">000</span></div>
+          <button id="new-game" class="face raised" aria-label="New game"></button>
+          <div class="led" title="Time" aria-label="Time"><span id="timer">000</span></div>
+        </section>
+
+        <div id="board-wrap" class="board-wrap">
+          <div id="board" class="board sunken" role="grid" aria-label="Minefield"></div>
+        </div>
+
+        <section class="controls">
+          <button id="flag-mode" class="mode raised" aria-pressed="false">
+            <span class="mode-icon"></span>
+            <span class="mode-label">Dig</span>
+          </button>
+          <div id="inventory" class="inventory" aria-label="Power-ups"></div>
+        </section>
       </div>
 
-      <section class="controls">
-        <button id="flag-mode" class="mode" aria-pressed="false">
-          <span class="mode-icon" aria-hidden="true">⛏️</span>
-          <span class="mode-label">Dig</span>
-        </button>
-        <div id="inventory" class="inventory" aria-label="Power-ups"></div>
-      </section>
-
-      <p id="hint" class="hint">Tap to dig · long-press or right-click to flag · uncover tiles for a chance at power-ups!</p>
+      <p id="hint" class="hint">Tap to dig. Hold or right-click to flag. Dig safe tiles to find power-ups!</p>
     </main>
 
-    <div id="toast" class="toast" role="status" hidden></div>
+    <div id="toast" class="toast raised" role="status" hidden></div>
 
-    <dialog id="result-dialog" class="result">
-      <h2 id="result-title"></h2>
-      <p id="result-body"></p>
-      <button id="play-again" class="primary">Play again</button>
+    <dialog id="result-dialog" class="result raised">
+      <header class="titlebar"><h2 id="result-title"></h2></header>
+      <div class="result-body">
+        <p id="result-body"></p>
+        <button id="play-again" class="primary raised">Play again</button>
+      </div>
     </dialog>
 
     <script type="module" src="src/main.js"></script>
