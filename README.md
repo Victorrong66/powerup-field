@@ -57,6 +57,8 @@ assets/tiles/       board tile images, cut from assets/tiles-source.png
 tools/slice_tiles.py  re-cuts the tiles after editing the sheet (needs Pillow)
 sw.js               offline cache (bump CACHE when releasing)
 manifest.webmanifest, icon.svg   PWA metadata
+assets/icons/       home-screen icons, built by tools/make_icons.py
+assets/fonts/       Press Start 2P pixel font (SIL Open Font License)
 test/               node:test unit tests for src/game.js
 ```
 
@@ -68,6 +70,17 @@ test/               node:test unit tests for src/game.js
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`
 - Field sizes: `SIZES` in `src/main.js` ("Fit screen" plus N×N squares)
 - Levels: `DIFFICULTIES` sets each level's mine density (and tile count for "Fit screen", shaped by `fitBoard`)
+
+## Put it on your iPhone (free)
+
+1. Host the folder on any HTTPS static host. On **Cloudflare Pages**: Workers & Pages,
+   Create, Pages, connect this GitHub repo, framework preset **None**, leave the
+   build command empty, and set the build output directory to `/`.
+2. Open the site in **Safari** on the iPhone, tap **Share**, then **Add to Home Screen**.
+
+It runs full-screen with its own icon and works offline after the first visit
+(the font, tiles and icons are all bundled). Every push to the production branch
+redeploys; reopen the app twice to pick up an update.
 
 ## Turning it into an app
 

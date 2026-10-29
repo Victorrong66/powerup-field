@@ -1,5 +1,13 @@
 /* Classic minesweeper look filling the whole screen: grey bevelled panels,
    red LED counters, pixel font and pixel-art sprites. */
+/* Pixel font bundled with the app (SIL Open Font License, assets/fonts/OFL.txt)
+   so it works offline. */
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('assets/fonts/press-start-2p.woff2') format('woff2');
+  font-display: swap;
+}
+
 :root {
   --grey: #c0c0c0;
   --light: #ffffff;
