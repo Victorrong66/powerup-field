@@ -17,7 +17,7 @@ number never drops anything.
 
 - **Tap / click**: dig a tile
 - **Long-press / right-click**: flag a tile
-- **⛏️/🚩 button** (or `F` key): switch between dig and flag mode (long-press then does the opposite)
+- **Dig/Flag button** (or `F` key): switch what a tap does. Long-press always flags, in either mode
 - **Tap a number** whose flags are all placed: opens the remaining neighbours (chording)
 - The first tap is always safe.
 

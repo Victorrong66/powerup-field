@@ -145,7 +145,8 @@ function handleTap(i, alternate) {
   }
 
   const cell = game.cells[i];
-  const wantsFlag = flagMode !== alternate;
+  // Long-press / right-click always flags, so it can never set off a mine.
+  const wantsFlag = flagMode || alternate;
   if (cell.drop) {
     const type = game.collect(r, c);
     if (type) {
@@ -326,7 +327,7 @@ function showToast(msg) {
 // ---------- input ----------
 
 // Tap = primary action, long-press (touch) or right-click (mouse) = the
-// alternate action. With flag mode on, the two are swapped.
+// alternate action (always flag). Flag mode only changes what a tap does.
 function attachBoardInput() {
   let pressTimer = null;
   let pressed = null; // { i, x, y, fired }
