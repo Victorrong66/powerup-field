@@ -23,7 +23,7 @@ const els = {
 
 let game;
 // 'fit' shapes the board to the screen; a number is an N×N square board.
-const SIZES = ['fit', '8', '10', '12', '16', '20', '24'];
+const SIZES = ['fit', '8', '10', '12', '16', '20', '24', '32'];
 let difficulty = loadSetting('difficulty', 'easy');
 if (!DIFFICULTIES[difficulty]) difficulty = 'easy';
 let size = loadSetting('size', 'fit');
@@ -69,7 +69,6 @@ els.playAgain.addEventListener('click', () => {
   newGame();
 });
 els.flagMode.addEventListener('click', () => setFlagMode(!flagMode));
-new ResizeObserver(sizeBoard).observe(els.boardWrap);
 window.addEventListener('keydown', (e) => {
   if (e.key === 'f' || e.key === 'F') setFlagMode(!flagMode);
   if (e.key === 'Escape') cancelTargeting();
@@ -97,7 +96,14 @@ function newGame() {
   const level = DIFFICULTIES[difficulty];
   let board;
   if (size === 'fit') {
-    board = fitBoard(level, els.boardWrap.clientWidth / els.boardWrap.clientHeight);
+    const w = els.boardWrap.clientWidth;
+    const h = els.boardWrap.clientHeight - 6; // board's top and bottom bevel
+    board = fitBoard(level, w / h);
+    // Tiles span the full width, so add or drop rows to fill the height exactly.
+    if (w > 0 && h > 0) {
+      board.rows = Math.max(5, Math.floor(h / (w / board.cols)));
+      board.mines = Math.max(1, Math.round(board.rows * board.cols * level.density));
+    }
   } else {
     const n = Number(size);
     board = { rows: n, cols: n, mines: Math.max(1, Math.round(n * n * level.density)) };
@@ -119,18 +125,6 @@ function buildBoard() {
     els.board.append(b);
     return b;
   });
-  sizeBoard();
-}
-
-function sizeBoard() {
-  if (!game) return;
-  // The board area flexes to fill the space between scoreboard and power-ups;
-  // make the square tiles as big as that space allows (minus the bevel).
-  const frame = 6;
-  const byW = (els.boardWrap.clientWidth - frame) / game.cols;
-  const byH = (els.boardWrap.clientHeight - frame) / game.rows;
-  const size = Math.max(16, Math.floor(Math.min(byW, byH)));
-  document.documentElement.style.setProperty('--cell', `${size}px`);
 }
 
 function handleTap(i, alternate) {

@@ -16,7 +16,6 @@
   --accent: #ffff00;
   --pixel: 'Press Start 2P', 'Courier New', ui-monospace, monospace;
   --bevel: 3px;
-  --cell: 32px;
   color-scheme: light;
 }
 
@@ -157,31 +156,43 @@ button.raised[aria-pressed='true'],
 }
 
 /* Board */
+/* The board runs edge to edge (out past the window padding). Tiles are
+   the screen width divided by the column count, so smaller grids get bigger
+   tiles. A board taller than the space scrolls; one that fits is centred. */
 .board-wrap {
   flex: 1 1 0;
   min-height: 0;
+  margin: 0 -8px;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: auto;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .board {
+  flex: none;
+  width: 100%;
+  margin-block: auto;
   display: grid;
   background: var(--grey);
-  grid-template-columns: repeat(var(--cols), var(--cell));
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+.board.sunken {
+  border-left: none;
+  border-right: none;
 }
 .board.targeting .cell:not(.open) {
   animation: target-blink 0.8s steps(2) infinite;
 }
 
 .cell {
-  width: var(--cell);
-  height: var(--cell);
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1;
   padding: 0;
   border: none;
   background: transparent center / 100% 100% no-repeat;
