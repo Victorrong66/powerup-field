@@ -1,0 +1,11 @@
+{
+  "name": "powerup-field",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minesweeper with a twist: uncover safe tiles for a chance at power-ups.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve -l 5173 .",
+    "test": "node --test test/*.test.js"
+  }
+}

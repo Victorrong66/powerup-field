@@ -1,0 +1,14 @@
+{
+  "name": "Power-Up Field",
+  "short_name": "PowerUp Field",
+  "description": "Minesweeper with a twist: uncover safe tiles for a chance at power-ups.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#008080",
+  "theme_color": "#008080",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
