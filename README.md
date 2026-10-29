@@ -55,6 +55,8 @@ src/main.js         UI: rendering, touch/mouse input, toasts, best times
 src/sprites.js      pixel-art icons (faces, power-ups) as character grids
 assets/tiles/       board tile images, cut from assets/tiles-source.png
 tools/slice_tiles.py  re-cuts the tiles after editing the sheet (needs Pillow)
+tools/build.mjs     npm run build: copies the game files into dist/ for hosting
+wrangler.jsonc      Cloudflare config (serves dist/)
 sw.js               offline cache (bump CACHE when releasing)
 manifest.webmanifest, icon.svg   PWA metadata
 assets/icons/       home-screen icons, built by tools/make_icons.py
@@ -73,9 +75,10 @@ test/               node:test unit tests for src/game.js
 
 ## Put it on your iPhone (free)
 
-1. Host the folder on any HTTPS static host. On **Cloudflare Pages**: Workers & Pages,
-   Create, Pages, connect this GitHub repo, framework preset **None**, leave the
-   build command empty, and set the build output directory to `/`.
+1. Deploy to **Cloudflare**: Workers & Pages, Create, import this GitHub repo.
+   Set **Build command** to `npm run build` and keep the default deploy command
+   (`npx wrangler deploy`); `wrangler.jsonc` tells Cloudflare to serve `dist/`.
+   Any other static host works too: run `npm run build` and upload `dist/`.
 2. Open the site in **Safari** on the iPhone, tap **Share**, then **Add to Home Screen**.
 
 It runs full-screen with its own icon and works offline after the first visit

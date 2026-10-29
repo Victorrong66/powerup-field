@@ -1,0 +1,9 @@
+// Cloudflare Workers config: serves the built game (npm run build -> dist/)
+// as static files. No server code.
+{
+  "name": "powerup-field",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
