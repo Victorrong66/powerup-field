@@ -167,11 +167,6 @@ const GRIDS = {
   ],
 };
 
-// Mine with a red cross, shown where a flag turned out to be wrong.
-GRIDS.wrong = GRIDS.mine.map((row, y) =>
-  [...row].map((ch, x) => (x === y || x === 12 - y ? 'r' : ch)).join(''),
-);
-
 const cache = new Map();
 
 export function sprite(name) {

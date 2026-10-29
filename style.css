@@ -162,6 +162,7 @@ button.raised[aria-pressed='true'],
 
 .board {
   display: grid;
+  background: var(--grey);
   grid-template-columns: repeat(var(--cols), var(--cell));
   touch-action: manipulation;
   user-select: none;
@@ -175,48 +176,43 @@ button.raised[aria-pressed='true'],
 .cell {
   width: var(--cell);
   height: var(--cell);
-  padding: calc(var(--cell) * 0.12);
-  background: var(--grey);
-  border: max(2px, calc(var(--cell) * 0.1)) solid;
-  border-color: var(--light) var(--shadow) var(--shadow) var(--light);
-  font-family: var(--pixel);
-  font-size: calc(var(--cell) * 0.5);
-  line-height: 1;
+  padding: 0;
+  border: none;
+  background: transparent center / 100% 100% no-repeat;
+  image-rendering: pixelated;
   cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-.cell .sprite {
-  width: 100%;
-  height: 100%;
 }
 .cell.open {
-  border-width: 1px 0 0 1px;
-  border-color: var(--shadow);
   cursor: default;
-  padding: calc(var(--cell) * 0.16);
-}
-.cell.exploded {
-  background: var(--boom);
-}
-.cell.defused {
-  background: var(--defused);
-}
-.cell.wrong {
-  background: var(--wrong);
 }
 .cell.lucky {
   animation: lucky 0.9s steps(3);
 }
 
-.n1 { color: #0000ff; }
-.n2 { color: #007b00; }
-.n3 { color: #ff0000; }
-.n4 { color: #00007b; }
-.n5 { color: #7b0000; }
-.n6 { color: #007b7b; }
-.n7 { color: #000000; }
-.n8 { color: #7b7b7b; }
+/* Tile art cut from assets/tiles-source.png by tools/slice_tiles.py */
+.cell[data-tile='hidden'] { background-image: url('assets/tiles/hidden.png'); }
+.cell[data-tile='open'] { background-image: url('assets/tiles/open.png'); }
+.cell[data-tile='flag'] { background-image: url('assets/tiles/flag.png'); }
+.cell[data-tile='mine'] { background-image: url('assets/tiles/mine.png'); }
+.cell[data-tile='exploded'] { background-image: url('assets/tiles/exploded.png'); }
+.cell[data-tile='wrong'] { background-image: url('assets/tiles/wrong.png'); }
+.cell[data-tile='defused'] { background-image: url('assets/tiles/defused.png'); }
+.cell[data-tile='1'] { background-image: url('assets/tiles/1.png'); }
+.cell[data-tile='2'] { background-image: url('assets/tiles/2.png'); }
+.cell[data-tile='3'] { background-image: url('assets/tiles/3.png'); }
+.cell[data-tile='4'] { background-image: url('assets/tiles/4.png'); }
+.cell[data-tile='5'] { background-image: url('assets/tiles/5.png'); }
+.cell[data-tile='6'] { background-image: url('assets/tiles/6.png'); }
+.cell[data-tile='7'] { background-image: url('assets/tiles/7.png'); }
+.cell[data-tile='8'] { background-image: url('assets/tiles/8.png'); }
+
+/* Loads every tile up front so the first reveal of each kind doesn't flicker. */
+.tile-preload {
+  position: absolute;
+  width: 0;
+  height: 0;
+  background-image: url('assets/tiles/hidden.png'), url('assets/tiles/open.png'), url('assets/tiles/flag.png'), url('assets/tiles/mine.png'), url('assets/tiles/exploded.png'), url('assets/tiles/wrong.png'), url('assets/tiles/defused.png'), url('assets/tiles/1.png'), url('assets/tiles/2.png'), url('assets/tiles/3.png'), url('assets/tiles/4.png'), url('assets/tiles/5.png'), url('assets/tiles/6.png'), url('assets/tiles/7.png'), url('assets/tiles/8.png');
+}
 
 /* Controls */
 .controls {
@@ -342,8 +338,8 @@ button.raised[aria-pressed='true'],
 }
 
 @keyframes lucky {
-  0%, 66% { background: var(--accent); }
-  100% { background: var(--grey); }
+  0%, 66% { filter: sepia(1) saturate(5) brightness(1.15); }
+  100% { filter: none; }
 }
 @keyframes bump {
   0% { transform: translateY(0); }
@@ -352,8 +348,8 @@ button.raised[aria-pressed='true'],
   100% { transform: translateY(0); }
 }
 @keyframes target-blink {
-  0% { background: var(--grey); }
-  100% { background: #e0e070; }
+  0% { filter: none; }
+  100% { filter: sepia(1) saturate(3) brightness(1.1); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -226,33 +226,13 @@ function render() {
   const lost = game.state === 'lost';
   game.cells.forEach((cell, i) => {
     const el = cellEls[i];
-    let cls = 'cell';
-    let text = '';
-    if (cell.defused) {
-      cls += ' defused';
-      text = sprite('flag');
-    } else if (cell.revealed && cell.mine) {
-      cls += ' open' + (cell.exploded ? ' exploded' : '');
-      text = sprite('mine');
-    } else if (cell.revealed) {
-      cls += ' open';
-      if (cell.adjacent) {
-        cls += ` n${cell.adjacent}`;
-        text = String(cell.adjacent);
-      }
-    } else if (cell.flagged) {
-      if (lost && !cell.mine) {
-        cls += ' wrong open';
-        text = sprite('wrong');
-      } else {
-        text = sprite('flag');
-      }
-    }
-    el.className = cls;
-    if (el._html !== text) {
-      el.innerHTML = text;
-      el._html = text;
-    }
+    let tile = 'hidden';
+    if (cell.defused) tile = 'defused';
+    else if (cell.revealed && cell.mine) tile = cell.exploded ? 'exploded' : 'mine';
+    else if (cell.revealed) tile = cell.adjacent ? String(cell.adjacent) : 'open';
+    else if (cell.flagged) tile = lost && !cell.mine ? 'wrong' : 'flag';
+    el.dataset.tile = tile;
+    el.classList.toggle('open', cell.revealed);
     el.setAttribute(
       'aria-label',
       cell.revealed ? (cell.mine ? 'mine' : `${cell.adjacent} adjacent mines`) : cell.flagged ? 'flagged' : 'hidden',

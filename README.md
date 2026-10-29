@@ -49,6 +49,9 @@ index.html          page shell
 style.css           styles (mobile-first, safe-area aware)
 src/game.js         game rules, no DOM: board, mines, power-ups, timer
 src/main.js         UI: rendering, touch/mouse input, toasts, best times
+src/sprites.js      pixel-art icons (faces, power-ups) as character grids
+assets/tiles/       board tile images, cut from assets/tiles-source.png
+tools/slice_tiles.py  re-cuts the tiles after editing the sheet (needs Pillow)
 sw.js               offline cache (bump CACHE when releasing)
 manifest.webmanifest, icon.svg   PWA metadata
 test/               node:test unit tests for src/game.js
@@ -56,7 +59,8 @@ test/               node:test unit tests for src/game.js
 
 ## Tuning
 
-- Pixel-art sprites: the character grids in `src/sprites.js` (one character per pixel)
+- Board tiles: edit `assets/tiles-source.png` (4×3 grid: hidden, open, flag, mine, then 1–8) and run `python3 tools/slice_tiles.py`
+- Pixel-art icons: the character grids in `src/sprites.js` (one character per pixel)
 - Power-up odds: `DEFAULT_POWERUP_CHANCE` in `src/game.js`
 - Which power-ups show up more often: each one's `weight` in `POWERUPS`
 - Board sizes: `DIFFICULTIES`
