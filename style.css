@@ -87,10 +87,9 @@ button.raised[aria-pressed='true'],
   display: flex;
   flex-direction: column;
   height: 100%;
+  height: 100dvh;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
-  /* Clear the iPhone home-indicator bar when running from the home screen. */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .window {
@@ -111,9 +110,8 @@ button.raised[aria-pressed='true'],
   justify-content: space-between;
   gap: 8px;
   margin: 0 -8px;
-  /* As a home-screen app the status bar (clock, battery) is see-through and
-     drawn over the page, so the navy bar runs up behind it and its contents
-     start below it. */
+  /* The home-screen app uses a solid status bar, so this inset is normally
+     0; it only matters if the page is ever drawn under the status bar. */
   padding: calc(4px + env(safe-area-inset-top, 0px)) 6px 4px;
   background: var(--title);
   color: var(--title-text);
@@ -342,7 +340,8 @@ button.raised[aria-pressed='true'],
 
 .hint {
   margin: 0;
-  padding: 0 8px 8px;
+  /* The hint sits just above the iPhone home-indicator bar. */
+  padding: 0 8px max(8px, env(safe-area-inset-bottom, 0px));
   color: var(--shadow);
   font-size: 8px;
   line-height: 1.8;
@@ -417,6 +416,9 @@ button.raised[aria-pressed='true'],
 @media (max-height: 560px) {
   .hint {
     display: none;
+  }
+  .window {
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   }
 }
 
