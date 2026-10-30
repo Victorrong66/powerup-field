@@ -80,6 +80,12 @@ setInterval(() => {
   renderHud();
 }, 1000);
 
+// Running as a home-screen app (iOS sets navigator.standalone): style.css
+// adds room at the top for the blur iOS draws under the status bar.
+if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+  document.documentElement.classList.add('standalone');
+}
+
 attachBoardInput();
 setFlagMode(false);
 newGame();
